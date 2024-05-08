@@ -1,4 +1,4 @@
-# AdminLinuxProf_HomeWork
+# linux-admin-pro-home-work
 Linux Administrator Professional Course - Homework Repository
 
 Welcome to the repository for the "Linux Administrator. Professional." course. This repository serves as the personal hub for submitting homework assignments. Each assignment is designed to reinforce the concepts and skills learned during the course, providing practical experience in managing and operating Linux systems.
