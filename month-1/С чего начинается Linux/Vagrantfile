@@ -1,0 +1,17 @@
+Vagrant.configure("2") do |config|
+    # Every Vagrant development environment requires a box. You can search for
+    # boxes at https://vagrantcloud.com/search.
+    config.vm.box = "generic/ubuntu2204"
+    config.vm.synced_folder ".", "/vagrant"
+    
+    # Определение первой VM
+    config.vm.define "NodeMaster" do |vm1|
+      vm1.vm.hostname = "NodeMaster"
+      vm1.vm.provider "virtualbox" do |vb|
+        vb.name = "NodeMasgter"
+        vb.memory = "16384"
+        vb.cpus = "4"
+      end
+      vm1.vm.disk :disk, size: "15GB", name: "extra disk"
+    end
+  end
