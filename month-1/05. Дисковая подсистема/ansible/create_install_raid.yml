@@ -1,0 +1,35 @@
+- hosts: base
+  become: true
+  vars:
+    mdadm_arrays: # Данные переменные применяются для работы роли mrlesmithjr.mdadm
+      - name: 'md0'
+        devices:
+          - '/dev/sdb'
+          - '/dev/sdc'
+          - '/dev/sdd'
+          - '/dev/sde'
+        filesystem: 'ext4'
+        level: '10'
+        mountpoint: '/mnt/md0'
+        state: 'present'
+        opts: 'noatime'
+        
+  tasks:
+    - name: Create mountpoint
+      file:
+        path: "{{ item.mountpoint }}"
+        state: directory
+      with_items: "{{ mdadm_arrays }}"    
+    - name: create partitions
+      parted:
+        device: '/dev/sdf'
+        number: "{{ item }}"
+        label: gpt
+        part_start: "{{ ((item-1)*20) }}%"
+        part_end: "{{ (item*20) }}%"
+        state: present
+      loop: [1, 2, 3, 4, 5]
+      tags:
+        - gpt-partitions
+  roles:
+    - role: mrlesmithjr.mdadm
