@@ -1,0 +1,40 @@
+---
+- name: Configure NFS client
+  hosts: client
+  become: true
+  tasks:
+    - name: Install NFS
+      ansible.builtin.apt:
+        name: nfs-common
+        state: present
+
+    - name: Check if filesystem is already mounted
+      block:
+        - ansible.builtin.shell: grep -qs "/data" /proc/mounts
+          register: mount_check
+          failed_when: mount_check.rc > 1
+      rescue:
+        - name: Output failure message  
+          ansible.builtin.debug:
+            msg: "Unnable to check if filesystem is already mounted"
+
+    - name: Create mount NFS point
+      ansible.builtin.file:
+        path: /share
+        state: directory
+        owner: root
+        group: root
+        mode: 0777
+      when: mount_check.rc == 1
+
+    - name: Mount NFS
+      block:
+        - ansible.posix.mount:
+            path: /share
+            src: 192.168.11.150:/share
+            fstype: nfs
+            opts: "vers=3"
+            dump: 0
+            passno: 0
+            state: mounted
+            

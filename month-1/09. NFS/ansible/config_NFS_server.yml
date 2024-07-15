@@ -1,0 +1,23 @@
+---
+- name: Configure NFS server
+  hosts: server
+  become: true
+  tasks:
+    - name: Install NFS
+      apt:
+        name: nfs-kernel-server
+        state: present
+    - name: Create share directory
+      file:
+        path: /share/upload
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: 0777
+    - name: Create NFS share
+      shell: 'echo "/share 192.168.0.0/16(rw,sync,no_subtree_check)" >> /etc/exports'
+    - name: Restart NFS
+      service:
+        name: nfs-kernel-server
+        state: restarted
+        enabled: yes
