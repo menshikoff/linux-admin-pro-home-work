@@ -1,0 +1,44 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+  :almaX => {
+        :box_name => "almalinux/9",
+        :vm_name => "almaX",
+        :net => [
+           ["192.168.11.190",  2, "255.255.255.0", "mynet"],
+        ]
+  },
+  :ubuntuX => {
+        :box_name => "generic/ubuntu2204",
+        :vm_name => "ubuntuX",
+        :net => [
+           ["192.168.11.200",  2, "255.255.255.0", "mynet"],
+        ]
+  }
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+   
+      box.vm.box = boxconfig[:box_name]
+      box.vm.host_name = boxconfig[:vm_name]
+      
+      box.vm.provider "virtualbox" do |v|
+        v.memory = 768
+        v.cpus = 1
+       end
+
+      boxconfig[:net].each do |ipconf|
+        box.vm.network "private_network", ip: ipconf[0]
+      end
+
+      if boxconfig.key?(:public)
+        box.vm.network "public_network", boxconfig[:public]
+      end
+    end
+  end
+end
