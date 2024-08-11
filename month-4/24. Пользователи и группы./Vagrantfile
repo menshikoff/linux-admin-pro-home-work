@@ -1,0 +1,73 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+  :ubuntuX => {
+        :box_name => "generic/ubuntu2204",
+        :vm_name => "ubuntuX",
+        :net => [
+           ["192.168.11.200",  2, "255.255.255.0", "mynet"],
+        ]
+  }
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+   
+      box.vm.box = boxconfig[:box_name]
+      box.vm.host_name = boxconfig[:vm_name]
+      
+      box.vm.provider "virtualbox" do |v|
+        v.memory = 768
+        v.cpus = 1
+       end
+
+      boxconfig[:net].each do |ipconf|
+        box.vm.network "private_network", ip: ipconf[0]
+      end
+
+      if boxconfig.key?(:public)
+        box.vm.network "public_network", boxconfig[:public]
+      end
+
+      box.vm.provision "shell", inline: <<-SHELL
+          mkdir -p ~root/.ssh
+          cp ~vagrant/.ssh/auth* ~root/.ssh
+          sudo sed -i 's/\#PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+          systemctl restart sshd
+
+          useradd -m -s /bin/bash otusadm && useradd -m -s /bin/bash otus
+          echo 'otusadm:Otus2022!' | chpasswd  && echo 'otus:Otus2022!' | chpasswd otus
+          groupadd -f admin
+          usermod -a -G admin otusadm
+          usermod -a -G admin otus
+          mkdir -p ~otus/.ssh && mkdir -p ~otusadm/.ssh && cp ~vagrant/.ssh/authorized_keys ~otus/.ssh/authorized_keys
+          cp ~vagrant/.ssh/authorized_keys ~otusadm/.ssh/authorized_keys
+          chown -R otusadm:otusadm ~otusadm/.ssh && chown -R otus:otus ~otus/.ssh 
+          
+          cat >> /usr/local/bin/login.sh << 'EOF'
+#!/bin/bash
+#Первое условие: если день недели суббота или воскресенье
+if [ $(date +%a) = "Sat" ] || [ $(date +%a) = "Sun" ]; then
+  #Второе условие: входит ли пользователь в группу admin
+  if getent group admin | grep -qw "$PAM_USER"; then
+    #Если пользователь входит в группу admin, то он может подключиться
+    exit 0
+    else
+    #Иначе ошибка (не сможет подключиться)
+      exit 1
+  fi
+  #Если день не выходной, то подключиться может любой пользователь
+  else
+    exit 0
+fi
+EOF
+          chmod +x /usr/local/bin/login.sh
+          echo 'account required pam_exec.so debug /usr/local/bin/login.sh' >> /etc/pam.d/sshd
+    SHELL
+    end
+  end
+end
