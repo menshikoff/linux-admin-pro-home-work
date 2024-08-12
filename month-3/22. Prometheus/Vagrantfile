@@ -1,0 +1,154 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+  :ubuntuX => {
+        :box_name => "generic/ubuntu2204",
+        :vm_name => "ubuntuX",
+        :net => [
+           ["192.168.11.200",  2, "255.255.255.0", "mynet"],
+        ]
+  },
+  :ubuntuZ => {
+        :box_name => "generic/ubuntu2204",
+        :vm_name => "ubuntuZ",
+        :net => [
+           ["192.168.11.210",  2, "255.255.255.0", "mynet"],
+        ]
+  }
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+   
+      box.vm.box = boxconfig[:box_name]
+      box.vm.host_name = boxconfig[:vm_name]
+      
+      box.vm.provider "virtualbox" do |v|
+        v.memory = 768
+        v.cpus = 1
+       end
+
+      boxconfig[:net].each do |ipconf|
+        box.vm.network "private_network", ip: ipconf[0]
+      end
+
+      if boxconfig.key?(:public)
+        box.vm.network "public_network", boxconfig[:public]
+      end
+      
+      if boxconfig[:vm_name] == "ubuntuX"
+        box.vm.network "forwarded_port", guest: 9090, host: 9099
+        box.vm.network "forwarded_port", guest: 3000, host: 3009
+        box.vm.provision "shell", inline: <<-SHELL
+        mkdir -p ~root/.ssh
+        cp ~vagrant/.ssh/auth* ~root/.ssh
+        sudo sed -i 's/\#PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+        systemctl restart sshd
+      # Устанавливаем вспомогательные пакеты и скачиваем Prometheus
+        apt-get update -y
+
+        wget https://github.com/prometheus/prometheus/releases/download/v2.44.0/prometheus-2.44.0.linux-amd64.tar.gz
+      # Создаем пользователя и нужные каталоги, настраиваем для них владельцев
+        useradd -s /bin/nologin prometheus
+        mkdir /etc/prometheus && chown prometheus:prometheus /etc/prometheus
+        mkdir /var/lib/prometheus && chown prometheus:prometheus /var/lib/prometheus
+      # Распаковываем архив, для удобства переименовываем директорию и копируем бинарники в /usr/local/bin
+        tar -xvzf prometheus-2.44.0.linux-amd64.tar.gz
+        mv prometheus-2.44.0.linux-amd64 prometheuspackage
+        cp prometheuspackage/prometheus /usr/local/bin/
+        cp prometheuspackage/promtool /usr/local/bin/
+      # Меняем владельцев у бинарников
+        chown prometheus:prometheus /usr/local/bin/prometheus
+        chown prometheus:prometheus /usr/local/bin/promtool
+      # По аналогии копируем библиотеки
+        cp -r prometheuspackage/consoles /etc/prometheus
+        cp -r prometheuspackage/console_libraries /etc/prometheus
+        chown -R prometheus:prometheus /etc/prometheus/consoles
+        chown -R prometheus:prometheus /etc/prometheus/console_libraries
+
+      # Создаем файл конфигурации
+        cat >> /etc/prometheus/prometheus.yml << 'EOF'
+global:
+ scrape_interval: 10s
+scrape_configs:
+ - job_name: 'prometheus_master'
+   scrape_interval: 5s
+   static_configs:
+    - targets: ['localhost:9090']
+
+ - job_name: 'node_exporter_ubuntuZ'
+   scrape_interval: 5s
+   static_configs:
+    - targets: ['192.168.11.210:9100']
+EOF
+        chown prometheus:prometheus /etc/prometheus/prometheus.yml
+      # Настраиваем сервис
+        cat >> /etc/systemd/system/prometheus.service << 'EOF'
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+--config.file /etc/prometheus/prometheus.yml \
+--storage.tsdb.path /var/lib/prometheus/ \
+--web.console.templates=/etc/prometheus/consoles \
+--web.console.libraries=/etc/prometheus/console_libraries
+[Install]
+WantedBy=multi-user.target
+EOF
+        systemctl daemon-reload
+        systemctl start prometheus
+        systemctl status prometheus
+    # Установим Grafana
+        apt-get install -y apt-transport-https software-properties-common wget
+        mkdir -p /etc/apt/keyrings/
+        wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+        echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+        apt-get update
+        apt-get install -y grafana
+        systemctl daemon-reload
+        systemctl start grafana-server
+      SHELL
+    else
+        box.vm.provision "shell", inline: <<-SHELL
+          mkdir -p ~root/.ssh
+          cp ~vagrant/.ssh/auth* ~root/.ssh
+          sudo sed -i 's/\#PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+          systemctl restart sshd
+          apt-get update -y
+        # Скачиваем и распаковываем Node Exporter
+          wget https://github.com/prometheus/node_exporter/releases/download/v1.5.0/node_exporter-1.5.0.linux-amd64.tar.gz
+          tar xzfv node_exporter-1.5.0.linux-amd64.tar.gz
+        # Создаем пользователя, перемещаем бинарник в /usr/local/bin
+          useradd -rs /bin/false nodeusr
+          mv node_exporter-1.5.0.linux-amd64/node_exporter /usr/local/bin/
+        # Создаем сервис
+          cat >> /etc/systemd/system/node_exporter.service << 'EOF'
+[Unit]
+Description=Node Exporter
+After=network.target
+[Service]
+User=nodeusr
+Group=nodeusr
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+[Install]
+WantedBy=multi-user.target
+EOF
+        # Запускаем сервис
+          systemctl daemon-reload
+          systemctl start node_exporter
+          systemctl enable node_exporter
+        SHELL
+      end
+    end
+  end
+end
