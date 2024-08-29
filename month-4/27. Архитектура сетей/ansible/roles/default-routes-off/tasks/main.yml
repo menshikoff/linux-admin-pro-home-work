@@ -1,0 +1,9 @@
+---
+- name: disable default routes
+  template:
+    src: 00-installer-config.yaml
+    dest: /etc/netplan/00-installer-config.yaml
+    owner: root
+    group: root
+    mode: 0644
+  notify: apply netplan

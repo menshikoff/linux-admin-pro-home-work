@@ -1,0 +1,12 @@
+Log created: 2024-08-18T21:27:19.857278000Z
+Process ID:  86829 (0x1532d)
+Parent PID:  1 (0x1)
+Executable:  /usr/lib/virtualbox/VBoxHeadless
+Arg[0]: /usr/lib/virtualbox/VBoxHeadless
+Arg[1]: --comment
+Arg[2]: 27_centralServer_1724012529348_47699
+Arg[3]: --startvm
+Arg[4]: 151ea82e-0aa4-46c0-965d-e5403666ba53
+Arg[5]: --vrde
+Arg[6]: config
+AddRef: illegal refcnt=3221225469 state=2

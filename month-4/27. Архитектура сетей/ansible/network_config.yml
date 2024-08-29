@@ -1,0 +1,40 @@
+---
+- name: set up traceroute
+  become: yes
+  hosts: all
+  roles:
+    - install-tracerote
+
+- name: Network configuration
+  hosts: inetRouter
+  become: yes
+  roles:
+    - nat-setup
+
+- name: set up forward packages across routers
+  become: yes
+  hosts: routers
+  roles:
+    - package-forward-on
+
+- name: disable default routes
+  become: yes
+  hosts: all:!inetRouter
+  roles:
+    - default-routes-off
+
+
+- name: set up routes
+  become: yes
+  hosts: all
+  roles:
+    - default-routes-add
+
+
+- name: restart all hosts
+  become: yes
+  hosts: all
+  tasks:
+    - name: restart all hosts
+      reboot:
+        reboot_timeout: 600

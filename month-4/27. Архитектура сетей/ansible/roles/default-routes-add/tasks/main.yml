@@ -1,0 +1,10 @@
+---
+- name: add default gateway for host
+  template: 
+    src: "50-vagrant_{{ansible_hostname}}.yaml"
+    dest: /etc/netplan/60-vagrant.yaml
+    owner: root
+    group: root
+    mode: 0644
+    force: yes
+  notify: apply netplan

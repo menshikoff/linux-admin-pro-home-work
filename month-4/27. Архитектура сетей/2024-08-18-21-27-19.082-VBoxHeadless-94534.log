@@ -1,0 +1,12 @@
+Log created: 2024-08-18T21:27:19.826856000Z
+Process ID:  94534 (0x17146)
+Parent PID:  1 (0x1)
+Executable:  /usr/lib/virtualbox/VBoxHeadless
+Arg[0]: /usr/lib/virtualbox/VBoxHeadless
+Arg[1]: --comment
+Arg[2]: 27_office2Server_1724013138082_66153
+Arg[3]: --startvm
+Arg[4]: 11145430-3015-4c85-a6ab-9ba920ddc6e0
+Arg[5]: --vrde
+Arg[6]: config
+AddRef: illegal refcnt=3221225469 state=2

@@ -1,0 +1,12 @@
+Log created: 2024-08-18T21:27:19.784252000Z
+Process ID:  75034 (0x1251a)
+Parent PID:  1 (0x1)
+Executable:  /usr/lib/virtualbox/VBoxHeadless
+Arg[0]: /usr/lib/virtualbox/VBoxHeadless
+Arg[1]: --comment
+Arg[2]: 27_centralRouter_1724012486859_60982
+Arg[3]: --startvm
+Arg[4]: d387cbe2-8fa4-42a1-8982-2d7b77324da7
+Arg[5]: --vrde
+Arg[6]: config
+AddRef: illegal refcnt=3221225469 state=2

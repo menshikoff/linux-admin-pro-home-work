@@ -1,0 +1,12 @@
+Log created: 2024-08-18T21:27:19.831569000Z
+Process ID:  73219 (0x11e03)
+Parent PID:  1 (0x1)
+Executable:  /usr/lib/virtualbox/VBoxHeadless
+Arg[0]: /usr/lib/virtualbox/VBoxHeadless
+Arg[1]: --comment
+Arg[2]: 27_inetRouter_1724011805939_26727
+Arg[3]: --startvm
+Arg[4]: 8a4833e9-af7e-41ff-b716-38af5aefa1a7
+Arg[5]: --vrde
+Arg[6]: config
+AddRef: illegal refcnt=3221225469 state=2

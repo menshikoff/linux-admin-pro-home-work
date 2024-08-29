@@ -1,0 +1,20 @@
+---
+# tasks file for roles/nat-setup
+- name: Ensure iptables-persistent is installed
+  apt:
+    name: iptables-persistent
+    state: present
+
+- name: Add iptables NAT rule
+  iptables:
+    table: nat
+    chain: POSTROUTING
+    destination: "! 192.168.0.0/16"
+    out_interface: eth0
+    jump: MASQUERADE
+    state: present
+
+- name: Save current state of the firewall in system file      
+  community.general.iptables_state:
+    state: saved
+    path: /etc/iptables/rules.v4

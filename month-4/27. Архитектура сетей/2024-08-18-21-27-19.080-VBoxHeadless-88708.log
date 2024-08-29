@@ -1,0 +1,12 @@
+Log created: 2024-08-18T21:27:19.807312000Z
+Process ID:  88708 (0x15a84)
+Parent PID:  1 (0x1)
+Executable:  /usr/lib/virtualbox/VBoxHeadless
+Arg[0]: /usr/lib/virtualbox/VBoxHeadless
+Arg[1]: --comment
+Arg[2]: 27_office1Router_1724013015247_63155
+Arg[3]: --startvm
+Arg[4]: 09793337-48bd-4653-88a4-8c55e47442e1
+Arg[5]: --vrde
+Arg[6]: config
+AddRef: illegal refcnt=3221225469 state=2
